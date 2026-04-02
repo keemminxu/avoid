@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>죽림고수(Avoid) — Team Agent Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a1a;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 30px 20px 10px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-bottom: 2px solid #e94560;
+  }
+  .header h1 { font-size: 1.8rem; color: #e94560; margin-bottom: 5px; }
+  .header p { color: #8892b0; font-size: 0.9rem; }
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  /* Orchestrator */
+  .orchestrator {
+    background: linear-gradient(135deg, #1a1a2e, #2d1b4e);
+    border: 2px solid #e94560;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .orchestrator::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(233,69,96,0.05) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+  .orchestrator h2 { color: #e94560; font-size: 1.3rem; position: relative; }
+  .orchestrator .desc { color: #8892b0; font-size: 0.85rem; margin-top: 8px; position: relative; }
+
+  /* Agent Grid */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  /* Agent Card */
+  .agent-card {
+    background: #111827;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid #1e293b;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .agent-card.client { border-left: 4px solid #3b82f6; }
+  .agent-card.client:hover { border-color: #60a5fa; box-shadow: 0 8px 30px rgba(59,130,246,0.15); }
+  .agent-card.server { border-left: 4px solid #8b5cf6; }
+  .agent-card.server:hover { border-color: #a78bfa; box-shadow: 0 8px 30px rgba(139,92,246,0.15); }
+  .agent-card.db { border-left: 4px solid #f59e0b; }
+  .agent-card.db:hover { border-color: #fbbf24; box-shadow: 0 8px 30px rgba(245,158,11,0.15); }
+
+  .agent-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .agent-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+  .client .agent-icon { background: rgba(59,130,246,0.15); }
+  .server .agent-icon { background: rgba(139,92,246,0.15); }
+  .db .agent-icon { background: rgba(245,158,11,0.15); }
+
+  .agent-name { font-size: 1.05rem; font-weight: 600; }
+  .agent-type { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+  .agent-tasks {
+    list-style: none;
+    margin-top: 10px;
+  }
+  .agent-tasks li {
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agent-tasks li:last-child { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .tag.files { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tag.deps { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .status-dot.ready { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+  .status-dot.waiting { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+  .status-dot.idle { background: #64748b; }
+
+  /* Phase Timeline */
+  .phase-section {
+    background: #111827;
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid #1e293b;
+  }
+  .phase-section h3 { color: #e94560; margin-bottom: 16px; font-size: 1.1rem; }
+
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #e94560, #533483, #0f3460);
+  }
+
+  .phase {
+    position: relative;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #1a1a2e;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+  }
+  .phase::before {
+    content: '';
+    position: absolute;
+    left: -25px; top: 20px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid #e94560;
+    background: #0a0a1a;
+  }
+  .phase.active::before {
+    background: #e94560;
+    box-shadow: 0 0 10px #e94560;
+  }
+
+  .phase h4 { color: #e2e8f0; margin-bottom: 8px; font-size: 0.95rem; }
+  .phase-agents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .phase-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .phase-badge.parallel { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .phase-badge.sequential { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+  /* Layer Labels */
+  .layer-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 8px 0;
+    margin-top: 10px;
+  }
+  .layer-label.client-label { color: #3b82f6; }
+  .layer-label.server-label { color: #8b5cf6; }
+  .layer-label.db-label { color: #f59e0b; }
+
+  /* Connection Diagram */
+  .connections {
+    background: #111827;
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid #1e293b;
+    text-align: center;
+  }
+  .connections h3 { color: #e94560; margin-bottom: 16px; }
+  .conn-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #8892b0;
+    line-height: 1.4;
+  }
+  .conn-row { white-space: pre; }
+  .conn-highlight { color: #e94560; font-weight: bold; }
+  .conn-client { color: #60a5fa; }
+  .conn-server { color: #a78bfa; }
+  .conn-db { color: #fbbf24; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #475569;
+    font-size: 0.75rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .agent-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>&#x1f3af; Team Agent Dashboard</h1>
+  <p>죽림고수(Avoid) — Godot 4.4 Multiplayer Dodge Game</p>
+</div>
+
+<div class="dashboard">
+
+  <!-- Orchestrator -->
+  <div class="orchestrator">
+    <h2>&#x1f3af; Orchestrator (Main Claude Session)</h2>
+    <div class="desc">Task Router &bull; Dependency Manager &bull; Merge Coordinator &bull; Agent Spawner</div>
+  </div>
+
+  <!-- Client Layer -->
+  <div class="layer-label client-label">&#x1f3ae; Client Layer — Godot 4.4 / GDScript</div>
+  <div class="agent-grid">
+    <div class="agent-card client">
+      <div class="agent-header">
+        <div class="agent-icon">&#x1f3a8;</div>
+        <div>
+          <div class="agent-name">Game Client Agent</div>
+          <div class="agent-type">subagent: frontend-architect</div>
+        </div>
+      </div>
+      <ul class="agent-tasks">
+        <li><span class="status-dot ready"></span> 플레이어 캐릭터 & CharacterBody2D</li>
+        <li><span class="status-dot ready"></span> 입력 처리 (방향키 이동)</li>
+        <li><span class="status-dot ready"></span> 게임 메인 씬 구성</li>
+        <li><span class="status-dot waiting"></span> UI/HUD (점수, 타이머)</li>
+      </ul>
+      <div style="margin-top:10px">
+        <span class="tag files">*.gd, *.tscn</span>
+        <span class="tag deps">depends: Asset, Network</span>
+      </div>
+    </div>
+
+    <div class="agent-card client">
+      <div class="agent-header">
+        <div class="agent-icon">&#x1f5bc;&#xfe0f;</div>
+        <div>
+          <div class="agent-name">Asset & Scene Agent</div>
+          <div class="agent-type">subagent: system-architect</div>
+        </div>
+      </div>
+      <ul class="agent-tasks">
+        <li><span class="status-dot ready"></span> 씬 트리 아키텍처 설계</li>
+        <li><span class="status-dot ready"></span> 장애물 씬 (PackedScene)</li>
+        <li><span class="status-dot idle"></span> 스프라이트 & 애니메이션</li>
+        <li><span class="status-dot idle"></span> 이펙트 & 파티클</li>
+      </ul>
+      <div style="margin-top:10px">
+        <span class="tag files">*.tscn, *.tres</span>
+        <span class="tag deps">independent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server Layer -->
+  <div class="layer-label server-label">&#x1f310; Server Layer — Network & Game Logic</div>
+  <div class="agent-grid">
+    <div class="agent-card server">
+      <div class="agent-header">
+        <div class="agent-icon">&#x26a1;</div>
+        <div>
+          <div class="agent-name">Network Agent</div>
+          <div class="agent-type">subagent: backend-architect</div>
+        </div>
+      </div>
+      <ul class="agent-tasks">
+        <li><span class="status-dot waiting"></span> MultiplayerAPI / WebSocket 설정</li>
+        <li><span class="status-dot waiting"></span> 서버-클라이언트 동기화</li>
+        <li><span class="status-dot idle"></span> 지역 기반 서버 매칭</li>
+        <li><span class="status-dot idle"></span> 상태 보간 & 지연 보상</li>
+      </ul>
+      <div style="margin-top:10px">
+        <span class="tag files">network/, multiplayer/</span>
+        <span class="tag deps">depends: Game Logic</span>
+      </div>
+    </div>
+
+    <div class="agent-card server">
+      <div class="agent-header">
+        <div class="agent-icon">&#x1f6e1;&#xfe0f;</div>
+        <div>
+          <div class="agent-name">Game Logic Agent</div>
+          <div class="agent-type">subagent: backend-architect</div>
+        </div>
+      </div>
+      <ul class="agent-tasks">
+        <li><span class="status-dot ready"></span> 장애물 스폰 시스템</li>
+        <li><span class="status-dot ready"></span> 난이도 곡선 (시간 기반)</li>
+        <li><span class="status-dot waiting"></span> 충돌 판정 (서버 권한)</li>
+        <li><span class="status-dot waiting"></span> 점수 계산 & 기록</li>
+      </ul>
+      <div style="margin-top:10px">
+        <span class="tag files">game_logic/, obstacles/</span>
+        <span class="tag deps">depends: Network, DB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DB Layer -->
+  <div class="layer-label db-label">&#x1f4be; DB Layer — Persistence & Ranking</div>
+  <div class="agent-grid">
+    <div class="agent-card db">
+      <div class="agent-header">
+        <div class="agent-icon">&#x1f5c4;&#xfe0f;</div>
+        <div>
+          <div class="agent-name">DB & Ranking Agent</div>
+          <div class="agent-type">subagent: backend-architect</div>
+        </div>
+      </div>
+      <ul class="agent-tasks">
+        <li><span class="status-dot ready"></span> DB 스키마 설계</li>
+        <li><span class="status-dot idle"></span> 점수 저장 API</li>
+        <li><span class="status-dot idle"></span> 랭킹 조회 시스템</li>
+        <li><span class="status-dot idle"></span> 유저 데이터 관리</li>
+      </ul>
+      <div style="margin-top:10px">
+        <span class="tag files">database/, api/</span>
+        <span class="tag deps">depends: Game Logic</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Diagram -->
+  <div class="connections">
+    <h3>&#x1f517; Agent Communication Map</h3>
+    <div class="conn-diagram">
+      <div class="conn-row"><span class="conn-client">[ Game Client ]</span> &lt;===&gt; <span class="conn-client">[ Asset & Scene ]</span></div>
+      <div class="conn-row">       |                          </div>
+      <div class="conn-row">       | <span style="color:#64748b">클라-서버 통신</span></div>
+      <div class="conn-row">       v                          </div>
+      <div class="conn-row"><span class="conn-server">[   Network   ]</span> &lt;===&gt; <span class="conn-server">[ Game Logic  ]</span></div>
+      <div class="conn-row">                                  |</div>
+      <div class="conn-row">                    <span style="color:#64748b">점수 기록</span>  |</div>
+      <div class="conn-row">                                  v</div>
+      <div class="conn-row">                          <span class="conn-db">[ DB & Ranking ]</span></div>
+    </div>
+  </div>
+
+  <!-- Phase Timeline -->
+  <div class="phase-section">
+    <h3>&#x1f4c5; Execution Phases</h3>
+    <div class="timeline">
+      <div class="phase active">
+        <h4>Phase 1 — 기반 구축 (병렬 실행)</h4>
+        <div style="color:#94a3b8;font-size:0.85rem">독립적 작업을 4개 에이전트가 동시에 수행</div>
+        <div class="phase-agents">
+          <span class="phase-badge parallel">&#x1f3a8; Game Client</span>
+          <span class="phase-badge parallel">&#x1f5bc;&#xfe0f; Asset & Scene</span>
+          <span class="phase-badge parallel">&#x1f6e1;&#xfe0f; Game Logic</span>
+          <span class="phase-badge parallel">&#x1f5c4;&#xfe0f; DB Schema</span>
+        </div>
+      </div>
+      <div class="phase">
+        <h4>Phase 2 — 네트워크 통합 (순차 의존)</h4>
+        <div style="color:#94a3b8;font-size:0.85rem">Phase 1 결과물을 기반으로 네트워크 계층 구축</div>
+        <div class="phase-agents">
+          <span class="phase-badge sequential">&#x26a1; Network (Client+Logic 의존)</span>
+        </div>
+      </div>
+      <div class="phase">
+        <h4>Phase 3 — 연동 & 테스트 (병렬 실행)</h4>
+        <div style="color:#94a3b8;font-size:0.85rem">계층 간 통합 테스트 및 연동</div>
+        <div class="phase-agents">
+          <span class="phase-badge parallel">&#x1f3a8;+&#x26a1; 클라-서버 연동</span>
+          <span class="phase-badge parallel">&#x1f6e1;&#xfe0f;+&#x1f5c4;&#xfe0f; 로직-DB 연동</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  죽림고수(Avoid) Team Agent Architecture &bull; Powered by Claude Code &bull; Pixel Agents for monitoring
+</div>
+
+</body>
+</html>
