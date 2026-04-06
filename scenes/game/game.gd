@@ -1,7 +1,15 @@
 extends Node2D
 ## 메인 게임 씬 스크립트
-## 점수 관리, 생존 시간 표시, 게임오버/재시작 처리
-## 스포너/난이도/충돌 시스템 통합
+## 원형 경기장 배경 렌더링, 점수 관리, 생존 시간 표시, 게임오버/재시작
+## 스포너/난이도/충돌 시스템 + 오브젝트 풀 통합
+
+# 원형 경기장 파라미터
+const ARENA_CENTER: Vector2 = Vector2(640, 360)
+const ARENA_RADIUS: float = 320.0
+const ARENA_BORDER_WIDTH: float = 4.0
+const ARENA_BORDER_COLOR: Color = Color("#2d5a1e")
+const ARENA_INNER_COLOR: Color = Color("#0f0f2e")
+const ARENA_OUTER_COLOR: Color = Color("#0a0a1a")
 
 # 현재 점수
 var score: int = 0
@@ -15,6 +23,7 @@ var is_game_running: bool = true
 @onready var obstacle_container: Node2D = $ObstacleContainer
 @onready var score_label: Label = $HUD/ScoreLabel
 @onready var time_label: Label = $HUD/TimeLabel
+@onready var nickname_label: Label = $HUD/NicknameLabel
 @onready var score_timer: Timer = $ScoreTimer
 @onready var game_over_panel: ColorRect = $HUD/GameOverPanel
 @onready var game_over_label: Label = $HUD/GameOverPanel/GameOverLabel
@@ -26,21 +35,37 @@ var is_game_running: bool = true
 # 장애물 씬 프리로드
 var _obstacle_scenes: Array[PackedScene] = []
 
+# 오브젝트 풀 (장애물 타입별)
+var _obstacle_pools: Array[ObjectPool] = []
+
 
 func _ready() -> void:
 	# 게임오버 패널 숨김
 	game_over_panel.visible = false
 
-	# 장애물 씬 로드
+	# 닉네임 표시
+	nickname_label.text = GameData.player_nickname
+
+	# 장애물 씬 로드 (인덱스 0: 기본, 1: 빠른, 2: 큰, 3: 추적)
 	_obstacle_scenes = [
 		preload("res://scenes/obstacles/obstacle.tscn"),
 		preload("res://scenes/obstacles/obstacle_fast.tscn"),
 		preload("res://scenes/obstacles/obstacle_large.tscn"),
-		preload("res://scenes/obstacles/obstacle_diagonal.tscn"),
+		preload("res://scenes/obstacles/obstacle_homing.tscn"),
 	]
 
+	# 각 장애물 타입별 오브젝트 풀 생성
+	for scene in _obstacle_scenes:
+		var pool := ObjectPool.new()
+		pool.pool_scene = scene
+		pool.initial_size = 30
+		pool.max_size = 120
+		pool.container = obstacle_container
+		add_child(pool)
+		_obstacle_pools.append(pool)
+
 	# 스포너 설정
-	obstacle_spawner.obstacle_scenes = _obstacle_scenes
+	obstacle_spawner.pools = _obstacle_pools
 	obstacle_spawner.obstacle_container = obstacle_container
 	obstacle_spawner.difficulty_manager = difficulty_manager
 	obstacle_spawner.player_target = player
@@ -80,6 +105,15 @@ func _process(delta: float) -> void:
 	_update_time_label()
 
 
+func _draw() -> void:
+	# 바깥 배경 (전체 화면을 어두운 색으로 채움)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(1280, 720)), ARENA_OUTER_COLOR)
+	# 원형 경기장 내부
+	draw_circle(ARENA_CENTER, ARENA_RADIUS, ARENA_INNER_COLOR)
+	# 원형 경기장 테두리 (녹색 링)
+	draw_arc(ARENA_CENTER, ARENA_RADIUS, 0.0, TAU, 128, ARENA_BORDER_COLOR, ARENA_BORDER_WIDTH)
+
+
 func _on_score_timer_timeout() -> void:
 	## 1초마다 점수 1 증가
 	if is_game_running:
@@ -104,12 +138,12 @@ func game_over() -> void:
 	obstacle_spawner.stop_spawning()
 	difficulty_manager.stop()
 
-	# 남아있는 장애물 모두 제거
-	for child in obstacle_container.get_children():
-		child.queue_free()
+	# 모든 풀의 활성 오브젝트 반환
+	for pool in _obstacle_pools:
+		pool.release_all()
 
-	# 게임오버 패널에 최종 점수 표시
-	game_over_label.text = "GAME OVER\n점수: %d\n시간: %s" % [score, _format_time(elapsed_time)]
+	# 게임오버 패널에 최종 점수/시간 표시
+	game_over_label.text = "GAME OVER\n점수: %d\n시간: %.2f초" % [score, elapsed_time]
 	restart_label.text = "Enter 키를 눌러 재시작"
 	game_over_panel.visible = true
 
@@ -125,13 +159,5 @@ func _update_score_label() -> void:
 
 
 func _update_time_label() -> void:
-	## 생존 시간 라벨 갱신 (mm:ss 형식)
-	time_label.text = _format_time(elapsed_time)
-
-
-func _format_time(time_seconds: float) -> String:
-	## 초를 mm:ss 형식 문자열로 변환
-	var total_seconds := int(time_seconds)
-	var minutes := total_seconds / 60
-	var seconds := total_seconds % 60
-	return "%02d:%02d" % [minutes, seconds]
+	## 생존 시간 라벨 갱신 (소수점 둘째자리)
+	time_label.text = "%.2f초" % elapsed_time

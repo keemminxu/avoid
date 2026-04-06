@@ -1,24 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://lrn3rtscw0mh"]
+[gd_scene load_steps=3 format=3 uid="uid://lrn3rtscw0mh"]
 
-[ext_resource type="PackedScene" uid="uid://coji2cgk2bc3w" path="res://scenes/obstacles/obstacle.tscn" id="1_base"]
-[ext_resource type="Script" uid="uid://dsw6jnc4y8wtf" path="res://scenes/obstacles/obstacle_fast.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://dsw6jnc4y8wtf" path="res://scenes/obstacles/obstacle_fast.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_col"]
-size = Vector2(16, 16)
+size = Vector2(24, 3)
 
-[node name="Obstacle" instance=ExtResource("1_base")]
-script = ExtResource("2_script")
-speed = 400.0
+[node name="ObstacleFast" type="Area2D"]
+collision_layer = 2
+script = ExtResource("1_script")
 
-[node name="CollisionShape2D" parent="." index="0"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_col")
-
-[node name="ColorRect" parent="." index="1"]
-offset_left = -8.0
-offset_top = -8.0
-offset_right = 8.0
-offset_bottom = 8.0
-color = Color(1, 0.55, 0, 1)
-
-[node name="VisibleOnScreenNotifier2D" parent="." index="2"]
-rect = Rect2(-8, -8, 16, 16)

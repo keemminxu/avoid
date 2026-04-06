@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="Avoid"
-run/main_scene="res://scenes/game/game.tscn"
+run/main_scene="res://scenes/menu/menu.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameData="*res://scripts/autoload/game_data.gd"
 
 [display]
 

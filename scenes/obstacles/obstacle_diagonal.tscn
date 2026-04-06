@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://btka57vuptm4y"]
+[gd_scene load_steps=3 format=3 uid="uid://cahursmuaasd"]
 
 [ext_resource type="PackedScene" uid="uid://coji2cgk2bc3w" path="res://scenes/obstacles/obstacle.tscn" id="1_base"]
-[ext_resource type="Script" uid="uid://dfbsh3m1fhos7" path="res://scenes/obstacles/obstacle_diagonal.gd" id="2_script"]
+[ext_resource type="Script" path="res://scenes/obstacles/obstacle_diagonal.gd" id="2_script"]
 
 [node name="Obstacle" instance=ExtResource("1_base")]
 script = ExtResource("2_script")

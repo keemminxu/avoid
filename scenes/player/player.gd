@@ -1,6 +1,6 @@
 extends CharacterBody2D
 ## 플레이어 캐릭터
-## 방향키로 8방향 이동, 화면 밖으로 나가지 않도록 클램핑
+## 방향키로 8방향 이동, 원형 경기장 안에서만 이동 가능
 
 # 이동 속도 (에디터에서 조정 가능)
 @export var speed: float = 300.0
@@ -8,14 +8,17 @@ extends CharacterBody2D
 # 플레이어 사망 시그널
 signal player_died
 
-# 뷰포트 크기 캐싱
-var _viewport_size: Vector2 = Vector2.ZERO
-# 충돌 반지름 (클램핑 계산용)
-var _collision_radius: float = 16.0
+# 원형 경기장 파라미터
+const ARENA_CENTER: Vector2 = Vector2(640, 360)
+const ARENA_RADIUS: float = 320.0
+
+# 충돌 반지름 (원형 비주얼과 동일)
+var _collision_radius: float = 8.0
 
 
 func _ready() -> void:
-	_viewport_size = get_viewport_rect().size
+	# 시작 위치를 경기장 중앙으로 설정
+	global_position = ARENA_CENTER
 
 
 func _physics_process(_delta: float) -> void:
@@ -32,16 +35,21 @@ func _physics_process(_delta: float) -> void:
 	velocity = input_direction * speed
 	move_and_slide()
 
-	# 화면 밖으로 나가지 않도록 위치 클램핑
-	_clamp_to_viewport()
+	# 원형 경계 안에 플레이어 위치를 제한
+	_clamp_to_arena()
 
 
-func _clamp_to_viewport() -> void:
-	## 뷰포트 경계 안에 플레이어 위치를 제한
-	var pos := global_position
-	pos.x = clampf(pos.x, _collision_radius, _viewport_size.x - _collision_radius)
-	pos.y = clampf(pos.y, _collision_radius, _viewport_size.y - _collision_radius)
-	global_position = pos
+func _draw() -> void:
+	# 흰색 원으로 플레이어 비주얼 표현
+	draw_circle(Vector2.ZERO, _collision_radius, Color.WHITE)
+
+
+func _clamp_to_arena() -> void:
+	## 원형 경기장 경계 안에 플레이어 위치를 제한
+	var offset: Vector2 = global_position - ARENA_CENTER
+	var max_distance: float = ARENA_RADIUS - _collision_radius
+	if offset.length() > max_distance:
+		global_position = ARENA_CENTER + offset.normalized() * max_distance
 
 
 func die() -> void:

@@ -1,12 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://coji2cgk2bc3w"]
+[gd_scene load_steps=3 format=3 uid="uid://btka57vuptm4y"]
 
-[ext_resource type="Script" uid="uid://d35y6dghpiyah" path="res://scenes/obstacles/obstacle.gd" id="1_script"]
+[ext_resource type="Script" path="res://scenes/obstacles/obstacle_homing.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_col"]
 size = Vector2(40, 4)
 
-[node name="Obstacle" type="Area2D"]
+[node name="ObstacleHoming" type="Area2D"]
 collision_layer = 2
+collision_mask = 1
 script = ExtResource("1_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
