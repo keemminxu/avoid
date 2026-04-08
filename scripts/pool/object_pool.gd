@@ -93,10 +93,12 @@ func _activate(obj: Node) -> void:
 	obj.set_process(true)
 	obj.set_physics_process(true)
 
-	# Area2D인 경우 충돌 감지 활성화
+	# Area2D인 경우 충돌 감지 활성화.
+	# set_deferred로 호출하여 body_entered 등 시그널 콜백 내부에서
+	# 활성화가 트리거되더라도 엔진 차단에 걸리지 않도록 한다.
 	if obj is Area2D:
-		(obj as Area2D).monitoring = true
-		(obj as Area2D).monitorable = true
+		(obj as Area2D).set_deferred("monitoring", true)
+		(obj as Area2D).set_deferred("monitorable", true)
 
 
 ## 오브젝트를 비활성 상태로 전환한다.
@@ -105,10 +107,12 @@ func _deactivate(obj: Node) -> void:
 	obj.set_process(false)
 	obj.set_physics_process(false)
 
-	# Area2D인 경우 충돌 감지 비활성화
+	# Area2D인 경우 충돌 감지 비활성화.
+	# set_deferred를 사용해야 body_entered 콜백 체인(→ game_over → release_all)
+	# 안에서 호출되더라도 "Function blocked during in/out signal" 에러가 발생하지 않는다.
 	if obj is Area2D:
-		(obj as Area2D).monitoring = false
-		(obj as Area2D).monitorable = false
+		(obj as Area2D).set_deferred("monitoring", false)
+		(obj as Area2D).set_deferred("monitorable", false)
 
 	# 화면 밖으로 이동
 	if obj is Node2D:

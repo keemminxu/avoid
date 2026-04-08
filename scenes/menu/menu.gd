@@ -44,5 +44,5 @@ func _try_enter_game() -> void:
 	# 싱글톤에 닉네임 저장
 	GameData.player_nickname = nickname
 
-	# 게임 씬으로 전환
-	get_tree().change_scene_to_file("res://scenes/game/game.tscn")
+	# 캐릭터 선택 씬으로 전환
+	get_tree().change_scene_to_file("res://scenes/character_select/character_select.tscn")

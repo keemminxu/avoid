@@ -1,13 +1,18 @@
-[gd_scene load_steps=3 format=3 uid="uid://lrn3rtscw0mh"]
+[gd_scene load_steps=4 format=3 uid="uid://lrn3rtscw0mh"]
 
 [ext_resource type="Script" uid="uid://dsw6jnc4y8wtf" path="res://scenes/obstacles/obstacle_fast.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/kenney_pixel-shmup/Ships/ship_0009.png" id="2_ship_red_jet"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_col"]
-size = Vector2(24, 3)
+size = Vector2(22, 22)
 
 [node name="ObstacleFast" type="Area2D"]
 collision_layer = 2
 script = ExtResource("1_script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_ship_red_jet")
+scale = Vector2(1.75, 1.75)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_col")

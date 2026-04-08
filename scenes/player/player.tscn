@@ -1,14 +1,16 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://h6o0yti3jwmy"]
 
-[ext_resource type="Script" path="res://scenes/player/player.gd" id="1_player_script"]
+[ext_resource type="Script" uid="uid://cbrnthlnywbbh" path="res://scenes/player/player.gd" id="1_player_script"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 8.0
 
 [node name="Player" type="CharacterBody2D"]
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("1_player_script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.08, 0.08)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_1")

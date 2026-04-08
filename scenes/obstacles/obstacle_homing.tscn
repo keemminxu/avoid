@@ -1,14 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://btka57vuptm4y"]
+[gd_scene load_steps=4 format=3 uid="uid://btka57vuptm4y"]
 
 [ext_resource type="Script" path="res://scenes/obstacles/obstacle_homing.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/kenney_pixel-shmup/Ships/ship_0003.png" id="2_ship_yellow"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_col"]
-size = Vector2(40, 4)
+size = Vector2(28, 28)
 
 [node name="ObstacleHoming" type="Area2D"]
 collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_ship_yellow")
+scale = Vector2(2, 2)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_col")

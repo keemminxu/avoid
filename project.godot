@@ -24,6 +24,10 @@ GameData="*res://scripts/autoload/game_data.gd"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 
+[dotnet]
+
+project/assembly_name="Avoid"
+
 [editor]
 
 version_control/plugin_name="GitPlugin"
@@ -55,3 +59,4 @@ move_down={
 [rendering]
 
 renderer/rendering_method="mobile"
+textures/canvas_textures/default_texture_filter=0
